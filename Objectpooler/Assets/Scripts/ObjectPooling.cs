@@ -52,15 +52,15 @@ public static class NetworkPool {
     /// </summary>
     // <param name="obj"></param>
     // <param name="size"></param>
-    static void Init(GameObject obj = null, int size = _DEFAULT_POOL_SIZE) {
+    static void Init(GameObject gameObject = null, int size = _DEFAULT_POOL_SIZE) {
 
         // Create a new '_ObjectPools' dictionary if one doesnt exist
         if (_ObjectPools == null)
             _ObjectPools = new Dictionary<GameObject, Pool>();
 
         // If a pool for this GameObject doesnt exist yet; make one
-        if (_ObjectPools != null && _ObjectPools.ContainsKey(obj) == false)
-            _ObjectPools[obj] = new Pool(obj, size);        
+        if (_ObjectPools != null && _ObjectPools.ContainsKey(gameObject) == false)
+            _ObjectPools[gameObject] = new Pool(gameObject, size);        
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ public static class NetworkPool {
 
         // Despawn all the new objects (now they are in ready in memory for use)
         for (int i = 0; i < size; i++)
-            DespawnObject(objects[i]);
+            Despawn(objects[i]);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ public static class NetworkPool {
     /// <returns>
     //  GameObject
     /// </returns>
-    private static GameObject SpawnObject(GameObject gameObject, Vector3 position, Quaternion rotation) {
+    private static GameObject Spawn(GameObject gameObject, Vector3 position, Quaternion rotation) {
 
         // Create any dictionaries neccessary 
         Init(gameObject);
@@ -120,14 +120,14 @@ public static class NetworkPool {
     //  Disables a GameObject and returns it back into its pool.
     /// </summary>
     //  <param name="obj"></param>
-    private static void DespawnObject(GameObject obj) {
+    private static void Despawn(GameObject gameObject) {
 
         // Despawn the object through its attached pool
-        PoolMember poolMember = obj.GetComponent<PoolMember>();
-        if (poolMember != null) { poolMember.LinkedPool.ReturnToPool(obj); }
+        PoolMember poolMember = gameObject.GetComponent<PoolMember>();
+        if (poolMember != null) { poolMember.LinkedPool.ReturnToPool(gameObject); }
 
         // The object wasn't spawned via an object pool, so just destroy it normally
-        else { GameObject.Destroy(obj, 1f); }
+        else { UnityEngine.Object.Destroy(gameObject, 1f); }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ public static class NetworkPool {
         }
 
         // Get the gameObject from the pool
-        var obj = SpawnObject(gameObject, position, rotation);
+        var obj = Spawn(gameObject, position, rotation);
         if (obj == null)
             return null;
 
@@ -176,7 +176,7 @@ public static class NetworkPool {
         }
 
         // Despawn the gameObject on server & client
-        DespawnObject(gameObject);
+        Despawn(gameObject);
         NetworkServer.UnSpawn(gameObject);
     }
 
@@ -219,12 +219,12 @@ public static class NetworkPool {
         /// </summary>
         // <param name="obj"></param>
         // <param name="size"></param>
-        public Pool(GameObject obj, int size) {
+         public Pool(GameObject gameObject, int size) {
 
-            this._GameObject = obj;
+            this._GameObject = gameObject;
             _POOL_INACTIVE_OBJECTS = new Stack<GameObject>(size);
 
-            _Parent = new GameObject("_OBJECT_POOL: " + obj.name);
+            _Parent = new GameObject("_OBJECT_POOL: " + gameObject.name);
             _Parent.transform.position = Vector3.zero;
             _Parent.transform.rotation = Quaternion.identity;
 
@@ -290,10 +290,10 @@ public static class NetworkPool {
         //  Returns an object back to the pool.
         /// </summary>
         // <param name="obj"></param>
-        public void ReturnToPool(GameObject obj) {
+        public void ReturnToPool(GameObject gameObject) {
 
-            obj.SetActive(false);
-            _POOL_INACTIVE_OBJECTS.Push(obj);
+            gameObject.SetActive(false);
+            _POOL_INACTIVE_OBJECTS.Push(gameObject);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -322,7 +322,7 @@ public static class NetworkPool {
         public static void ClientDespawn(GameObject gameObject) {
 
             Debug.LogWarning("WARNING: Client Despawn: " + gameObject.GetInstanceID());
-            DespawnObject(gameObject);
+            Despawn(gameObject);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +358,7 @@ public static class ObjectPooling {
     //**************************************************************************************************************
 
     private const int _DEFAULT_POOL_SIZE = 3;
-    static Dictionary<GameObject, Pool> ObjectPools;
+    private static Dictionary<GameObject, Pool> _ObjectPools;
 
     //**************************************************************************************************************
     //                                                                                                             *
@@ -380,8 +380,8 @@ public static class ObjectPooling {
             _ObjectPools = new Dictionary<GameObject, Pool>();
 
         // If a pool for this GameObject doesnt exist yet; make one
-        if (_ObjectPools != null && _ObjectPools.ContainsKey(obj) == false)
-            _ObjectPools[obj] = new Pool(obj, size);
+        if (_ObjectPools != null && _ObjectPools.ContainsKey(gameObject) == false)
+            _ObjectPools[gameObject] = new Pool(gameObject, size);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -408,7 +408,7 @@ public static class ObjectPooling {
 
         // Despawn all the new objects (now they are in ready in memory for use)
         for (int i = 0; i < size; i++)
-            DespawnObject(objects[i]);
+            Despawn(objects[i]);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -426,7 +426,7 @@ public static class ObjectPooling {
     /// <returns>
     //  GameObject
     /// </returns>
-    public static GameObject SpawnObject(GameObject gameObject, Vector3 position, Quaternion rotation) {
+    public static GameObject Spawn(GameObject gameObject, Vector3 position, Quaternion rotation) {
 
         // Create any dictionaries neccessary 
         Init(gameObject);
@@ -448,7 +448,7 @@ public static class ObjectPooling {
         if (poolMember != null) { poolMember.LinkedPool.ReturnToPool(gameObject); }
 
         // The object wasn't spawned via an object pool, so just destroy it normally
-        else { GameObject.Destroy(gameObject, 1f); }
+        else { UnityEngine.Object.Destroy(gameObject, 1f); }
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -515,7 +515,7 @@ public static class ObjectPooling {
             if (_POOL_INACTIVE_OBJECTS.Count == 0) {
 
                 // There aren't any objects in the pool to use so create a new one
-                obj = GameObject.Instantiate(_GameObject, position, rotation);
+                obj = UnityEngine.Object.Instantiate(_GameObject, position, rotation);
 
                 // Add a pool member component so we know what object pool this object belongs to
                 obj.AddComponent<PoolMember>().LinkedPool = this;
@@ -531,7 +531,7 @@ public static class ObjectPooling {
 
                     // Somehow the object that was to be returned no longer exists 
                     // (IE: Has been destroyed or a scene change, so we try again)
-                    return Spawn(position, rotation);
+                    return GetFromPool(position, rotation);
                 }
             }
 
