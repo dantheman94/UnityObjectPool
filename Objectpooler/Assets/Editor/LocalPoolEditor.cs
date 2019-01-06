@@ -12,6 +12,12 @@ using UnityEditor;
 //
 //******************************
 
+/// <summary>
+//  Resources used:
+//  - https://docs.unity3d.com/Manual/RunningEditorCodeOnLaunch.html
+//  - https://answers.unity.com/questions/447701/event-for-unity-editor-pause-and-playstop-events.html
+/// </summary>
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 [InitializeOnLoad]
